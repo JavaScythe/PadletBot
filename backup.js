@@ -13,48 +13,28 @@ const colorcodeJSON = {
   'orange':2,
   'blue':4
 }
-function edit(posthtml, msg){
-  posthtml.children[0].children[1].children[0].children[0].children[0].click();
+async function edit(msg, num){
+  getElementByXpath('/html/body/div[3]/div[1]/div[2]/div/div['+num+']/div/div[2]/button').click();
+  await delay(500);
+  getElementByXpath('/html/body/div[3]/div[3]/div/div/div[2]').click();
   send(msg);
 }
-async function color(posthtml, colorcode, msg, postH){
-  console.log(posthtml.children[0].children[0].children[2].children[0].children[0].children[0].textContent);
-  console.log(msg)
-  if(posthtml.children[0].children[0].children[2].children[0].children[0].children[0].textContent != msg){
-    posthtml=postH.children[posthtml.getAttribute('data-index')-2];
-    posthtml.children[0].children[1].children[0].children[2].children[0].click();
+async function color(num, colorcode, postH, msg){
+  var postcont = postH.children[num-1].children[0].children[0].children[2].children[0].children[0].children[0].textContent;
+  if(postcont == msg){
+    getElementByXpath('/html/body/div[3]/div[1]/div[2]/div/div['+num+']/div/div[2]/button').click();
+    await delay(500);
+    getElementByXpath('/html/body/div[3]/div[3]/div/div/div[1]/menu').children[colorcodeJSON[colorcode]].click();
   } else {
-    posthtml.children[0].children[1].children[0].children[2].children[0].click();
+    num=num+1;
+    console.log(num);
+    getElementByXpath('/html/body/div[3]/div[1]/div[2]/div/div['+num+']/div/div[2]/button').click();
+    await delay(500);
+    getElementByXpath('/html/body/div[3]/div[3]/div/div/div[1]/menu').children[colorcodeJSON[colorcode]].click();
   }
-  await delay(500);
-  getElementByXpath('/html/body/div[3]/div[3]/div/div/div[1]/menu').children[colorcodeJSON[colorcode]].click();
 }
 var urlbtn = getElementByXpath('/html/body/div[3]/div[2]/div[1]/div/div[2]/div/div/button[2]');
 var urlbar;
-async function attach(url){
-  urlbtn.click();
-  await delay(500);
-  urlbar = getElementByXpath('/html/body/div[3]/div[2]/div[2]/div/div/div/div/input');
-  var urlsub = getElementByXpath('/html/body/div[3]/div[2]/div[2]/div/div/div/footer/button[2]');
-  var keyboardEvent = document.createEvent('KeyboardEvent');
-   delete keyboardEvent.which;
-   var initMethod = typeof keyboardEvent.initKeyboardEvent !== 'undefined' ? 'initKeyboardEvent' : 'initKeyEvent';
-   keyboardEvent[initMethod](
-     'keyup', // event type : keydown, keyup, keypress
-     true, // bubbles
-     true, // cancelable
-     window, // viewArg: should be window
-     false, // ctrlKeyArg
-     false, // altKeyArg
-     false, // shiftKeyArg
-     false, // metaKeyArg
-     13, // keyCodeArg : unsigned long the virtual key code, else 0
-     13 // charCodeArgs : unsigned long the Unicode character associated with the depressed key, else 0
-   );
-  urlbar.focus();
-  urlbar.value = url;
-  urlbar.dispatchEvent(keyboardEvent);
-}
 const emojis = {'facepalm': '🤦‍♂️', 'rofl':'🤣', 'sigh':'🙄', 'tired':'😴', 'mask':'😷', 'curse':'🤬', 'ok':'👌', 'small':'🤏', 'foff':'🖕', '+1':'👍', '-1':'👎', 'hacker':'👨‍💻', 'surprise':'😧', 'bruh':'😑', 'pensive':'🤔', 'swag':'😎', 'angery':'😡', 'sad':'😢', 'mindblown':'🤯', 'money':'🤑', '100':'💯', 'page':'📄', 'up':'⏫', 'stonks':'📈', 'notstonks':'📉', 'check':'✔️', 'x':'❌', '?':'❓', '!?':'⁉️', 'f':'🇫', 'wave':'👋', 'smile':'😃', 'heart':'❤️', 'boom':'💥', 'sus':'⛔', 'tf':'🇹🇫'};
 const delay = ms => new Promise(res => setTimeout(res, ms));
 function getRandom(min, max) {
@@ -62,20 +42,9 @@ function getRandom(min, max) {
   max = Math.floor(max);
   return Math.floor(Math.random() * (max - min) + min);
 }
-function handleEmoji(raw){
-  if(raw.match(/:/g).length === 2){
-    raw = raw.replace(":", "");
-    raw = raw.replace(":", "");
-    if(emojis[raw] != undefined){
-      return emojis[raw];
-    } else {
-      return '';
-    }
-  }
-}
 var gameStart;
 var start;
-async function evalulate(raw, author, displayname, postH){
+async function evalulate(raw, author, displayname, postH, num){
   if(gameStart == 1 && raw == 'h' && gameAuthor == author){
   var random = getRandom(1, 11);
   var hitted = start+random;
@@ -121,7 +90,7 @@ async function evalulate(raw, author, displayname, postH){
   } else if (raw == 'bot.destroy') {
     return 'x00000break';
   } else if (raw == 'help'){
-    return "Command List: !me, !ping, !y (text), !b, !emoji, :emojiname:, !search (text)";
+    return "Command List: !me, !ping, !y (text), !b, !emoji, :emojiname:, !search (word), !postnum";
   } else if (raw == 'b') {
     if (gameStart == 1){
       return 'Game alreardy started';
@@ -133,7 +102,7 @@ async function evalulate(raw, author, displayname, postH){
     }
   } else if(raw == 'me') {
     return displayname+' ('+author+')';
-  } else if(raw == 'postnum') {
+  } else if(raw == 'postnum' || raw == 'count') {
     return 'x00000length';
   } else if(raw == 'user') {
     return 'User: '+author+', display name: '+displayname;
@@ -165,8 +134,10 @@ async function evalulate(raw, author, displayname, postH){
     def = 'Type of word: '+json[0]['meanings'][0]['partOfSpeech']+': '+json[0]['meanings'][0]['definitions'][0]['definition']+'  Example: '+json[0]['meanings'][0]['definitions'][0]['example'];
     return def;
   } else if(raw == 'color'){
-    color(postH,'orange', 'Orange');
-    return 'Colored';
+    send('Orange');
+    await delay(700);
+    color(num,'orange', postH, 'Orange');
+    return 'x00000';
   } else {
     return 'x00000';
   }
@@ -194,24 +165,21 @@ try {
       author = string;
       if(postcont[0] == '!'){
         raw = postcont.replace("!", "");
-      var proce = await evalulate(raw, author, displayname, post.children[count]);
+      var proce = await evalulate(raw, author, displayname, post, count+1);
         if (proce == 'x00000'){
           //
         } else if (proce == 'x00000break') {
           if(author == 'xX_untraceable_Xx'){
-            var botpro = send('Bot process killed by '+displayname+' ('+author+') : manual shutdown: '+new Date);
-            setTimeout(function(){color(post.children[count+1], 'blue', botpro, post)}, 500);
+            send('Bot process killed by '+displayname+' ('+author+') : manual shutdown: '+new Date);
             break;
           } else {
-            var botpro = send(displayname+' ('+author+') doesn\'t have the permissions to do that!');
-            setTimeout(function(){color(post.children[count+1], 'blue', botpro, post)}, 500);
+            send(displayname+' ('+author+') doesn\'t have the permissions to do that!');
           }
         } else if (proce == 'x00000length') { 
-          var inde = send(post.children[count].getAttribute('data-index'));
-          setTimeout(function(){color(post.children[count+1], 'blue', inde, post)}, 500);
+          send(post.children[count].getAttribute('data-index'))
         } else {
-          var res = send(proce);
-          setTimeout(function(){color(post.children[count+1], 'blue', res, post)}, 500);
+          send(proce);
+          setTimeout(function() {color(count, 'blue', post, proce);},2000);
         }
         count2 = post.children[count].getAttribute('data-index');
       } else if (postcont.match(/:/g)!=null && postcont.match(/:/g).length >= 2){
@@ -223,7 +191,7 @@ try {
           }
         }
         if(wors!=postcont){
-          edit(post.children[count], wors);
+          edit(wors, count+1);
         }
       }
     }
@@ -231,6 +199,7 @@ try {
   }
 
 } catch (err) {
+  console.log(err)
   send(err+' : '+new Date);
   await delay(60000);
   main();
