@@ -339,11 +339,9 @@ async function main() {
           if (wors !== postcont) {
             edit(post.children[count], wors);
           }
-        }
-        var counr = (raw.match(/\//g) || []).length;
-        if (counr !== 0) {
-          for (let u = 1; u <= counr; u++) {
-            raw.replace("/shrug", "kanmoji here");
+        } else if ((postcont.match(/\//g) || []).length !== 0) {
+          for (let u = 1; u <= (postcont.match(/\//g) || []).length; u++) {
+            wors = postcont.replace("/shrug", "kanmoji here");
           }
           if (wors !== postcont) {
             edit(post.children[count], wors);
