@@ -340,6 +340,15 @@ async function main() {
             edit(post.children[count], wors);
           }
         }
+        var counr = (raw.match(/\//g) || []).length;
+        if (counr !== 0) {
+          for (let u = 1; u <= counr; u++) {
+            raw.replace("/shrug", "kanmoji here");
+          }
+          if (wors !== postcont) {
+            edit(post.children[count], wors);
+          }
+        }
       }
       await delay(1000);
     }
